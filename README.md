@@ -162,6 +162,7 @@ DeconstructED/
 ├── package.json                # Package metadata ("deconstructed" v1.0.0, ESM, "test": "node --test")
 ├── index.html                  # Matcha & Linen UI, modals, Landing/Studio views, SVG maps & specimens
 ├── README.md                   # Project documentation
+├── PROMPT.xml                  # Original DeconstructED v1.1 XML specification prompt
 ├── src/
 │   ├── parser.js               # Lazy readRange engine, 7 binary parsers, pre-decompression SecurityError guards
 │   ├── ml.js                   # TF-IDF + Multinomial Naive Bayes, logistic risk + ablation, BKT engine

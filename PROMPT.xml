@@ -1,0 +1,87 @@
+<deconstructed_prompt version="1.1">
+<persona>
+You are a senior browser-platform engineer shipping dependency-free vanilla ES Modules. DeconstructED is a clean-room teaching tool: a dropped app binary is X-rayed locally, classical ML explains it, four labs teach fixes from that evidence, and a forge emits a hardened starter.
+</persona>
+
+<task>
+Build exactly 7 files: package.json, src/zipforge.js, src/parser.js, src/ml.js, src/labs.js, index.html, tests/deconstructed.test.js. Print each in its own fenced block under its path.
+Hard constraints: 100% browser-based, zero LLM, npm, pip, CDNs, external fonts, or API keys. package.json is {"type": "module"} plus scripts.test "node --test". It runs via `python3 -m http.server 8765` and unchanged on GitHub Pages, Cloudflare Pages, and Render Static Site (relative imports, no build).
+</task>
+
+<architecture>
+1. src/zipforge.js (STORE ZIP writer, clean-room starter forge)
+- IEEE 802.3 CRC-32 from a 256-entry table; finish with `(crc ^ 0xFFFFFFFF) >>> 0` before `view.setUint32(off, crc, true)`.
+- Export createStoreZip(files): [{name, content}] (string or Uint8Array) -> Uint8Array. Method 0; emit Local File Headers, Central Directory, EOCD.
+- Export forgeStarterZip(scanResult, mlResult, masteryMap): extractable zip containing MOOC_SYLLABUS.md (evidence + BKT mastery), ARCHITECTURE.md, THREAT_MODEL.md (flagged risks + mitigations), clean-room src/app.js and tests/starter.test.js (zero copied code), hardened Dockerfile (pinned base, non-root USER, HEALTHCHECK), .dockerignore, render.yaml, .github/workflows/ci.yml.
+
+2. src/parser.js (7-format X-ray, 512 MB lazy range reads, security guards, specimen factories)
+- Build views as `new DataView(u8.buffer, u8.byteOffset, u8.byteLength)`.
+- Export MAX_FILE_BYTES = 512 * 1024 * 1024 and `async function readRange(source, start, end)` (~10 lines) accepting Uint8Array, ArrayBuffer, or Blob/File (`await source.slice(start, end).arrayBuffer()`), returning clamped Uint8Array. Never call `.arrayBuffer()` on a full File.
+- Export SecurityError (extends Error). Guards run BEFORE decompression: reject `size > MAX_FILE_BYTES`. For ZIPs, read last 65,557 bytes via readRange, scan backwards for EOCD 0x06054b50 (comments allowed), walk Central Directory (0x02014b50); reject names with `..` or leading `/` or `\` via SecurityError("PATH_TRAVERSAL"); reject any entry with `uncompressedSize > 1_048_576 && uncompressedSize / Math.max(1, compressedSize) > 100` or metadata extraction > 16 MB (16 * 1024 * 1024) via SecurityError("ZIP_BOMB").
+- Safe lazy inflate: read LFH via readRange at localHeaderOffset (CD + 42), read fileNameLen (LFH + 26) and extraLen (LFH + 28), read payload via readRange at localHeaderOffset + 30 + lfhNameLen + lfhExtraLen. Method 0 returns slice; method 8 returns `new Uint8Array(await new Response(new Blob([rawSlice]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())`.
+- Export `async parseBinary(source, filename)`:
+  - .apk: ZIP directory; classes.dex ("dex\n035\0".."039\0", DataView counts stringIdsSize, typeIdsSize, classDefsSize, methodIdsSize); raw UTF-16LE/UTF-8 byte scan of AXML AndroidManifest.xml for android.permission.* and usesCleartextTraffic (NEVER DOMParser/XML parser on AXML); lib/*/*.so markers (libflutter.so, libunity.so, libil2cpp.so, libreactnativejni.so, libgodot).
+  - .xapk: ZIP directory with manifest.json (xapk_version, split_apks, permissions, expansions) and/or nested .apk/.obb entries. JSON.parse manifest.json; inventory split APKs, ABIs (arm64-v8a), OBB packs, permissions; inspect nested STORE base.apk if <= 16 MB.
+  - .ipa: ZIP directory; Payload/*.app/Info.plist (XML regex, or bplist00 + printable ASCII/UTF-16 keys); Frameworks/ inventory; Mach-O check. FAT 0xCAFEBABE is Big-Endian: getUint32(off, false) for nfat_arch and slice offset (+8). Thin 64-bit 0xFEEDFACF is Little-Endian: getUint32(sliceOff, true). Iterate ncmds from sliceOff + 32; at cmd === 0x2C (LC_ENCRYPTION_INFO_64) read cryptid = view.getUint32(cmdOff + 16, true); 1 = FairPlay DRM.
+  - .exe: MZ (0x5A4D), e_lfanew at 0x3C, "PE\0\0", COFF machine (0x8664 x64, 0x014C x86, 0xAA64 ARM64), timestamp, section table with per-section Shannon entropy via readRange (flag executable or non-.rsrc sections > 7.2), ASCII/UTF-16 scan (WS2_32.dll, d3d11.dll, mscoree.dll, python3, Electron).
+  - .msi: OLE2 magic D0 CF 11 E0 A1 B1 1A E1, MSCF CAB marker, ASCII/UTF-16LE installer markers via bounded readRange slices (~15 lines, no CFBF decoding).
+  - .pkg: macOS XAR installer. Read 28-byte header via readRange; validate Big-Endian magic 0x78617221 ("xar!"), header_size (uint16 BE +4), toc_len_comp (uint32 BE +12), toc_len_uncomp (uint32 BE +20), checksum_alg (uint32 BE +24). Read [header_size, header_size + toc_len_comp] (<= 4 MB) via readRange; inflate via `new Response(new Blob([tocSlice]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer()` (standard zlib `deflate`, NOT `deflate-raw`); regex-extract `<file><name>` (Distribution, PackageInfo, Payload, Scripts) and `<signature>` status.
+  - .zip: topology, manifests (package.json, requirements.txt, Dockerfile, pubspec.yaml), .sqlite/.db/.json schemas, .onnx/.tflite.
+- Export shared specimen factories: fintech_wallet.apk, createSyntheticXapk(), fairplay_sample.ipa, edge_sensor_kit.zip, installer_sample.msi (via createStoreZip or OLE2 helper), `async createSyntheticPkg()` (using `CompressionStream('deflate')` for real XAR header + zlib XML TOC), and arcade_engine.exe (.text = 256× 0x90, entropy 0.00; .upx0 = `i & 0xFF`, entropy 8.00; d3d11.dll, WS2_32.dll). Export SPECIMENS (fintech_wallet.apk, arcade_engine.exe, edge_sensor_kit.zip).
+
+3. src/ml.js (pure-JS classical ML, Node v24-safe storage)
+- `function getStore() { try { if (typeof localStorage !== 'undefined' && localStorage !== null) return localStorage; } catch {} return memStore; }` (Map-backed getItem/setItem). Touch localStorage nowhere else.
+- classifyArchetype(tokens): TF-IDF + multinomial Naive Bayes over "Fintech / Payments", "2D/3D Game", "Media & Camera", "IoT / Hardware", "Productivity / Utility". Laplace smoothing; max-shift log-sum-exp softmax (m = Math.max(...logScores)) summing to 1.0. Return {topArchetype, probabilities}.
+- scoreRisk(features): weighted logistic over maxCodeEntropy, dangerousPermCount, cleartextHttp, packedSection, fairplayOrUnsigned. Return {score (0-100), level, attributions: [{feature, value, delta}]}.
+- updateBKT(prior, passed): P_L0 = 0.25, P_T = 0.30, P_G = 0.15, P_S = 0.10. Bayes posterior on passed, then pNext = pPost + (1 - pPost) * P_T (pass strictly increases mastery). Persist under deconstructed_bkt_v1.
+
+4. src/labs.js (4 composable labs, deterministic verifiers, hash-chained ledger)
+- Labs sqlite_safety, api_bounds, permission_hardening, docker_hardening compose from (scanResult x mlResult.topArchetype); lessons cite evidence. ZERO eval() or Web Workers.
+  1. sqlite_safety: fail on interpolation/concatenation (f", +, ${); pass on ? placeholder in execute(..., (...)) or prepare(...).
+  2. api_bounds: fail on unclamped subtraction; pass on Math.max(0, or max(0,.
+  3. permission_hardening: fail on usesCleartextTraffic="true" or unneeded READ_CONTACTS / WRITE_EXTERNAL_STORAGE; pass on usesCleartextTraffic="false" with minimal scoped permissions.
+  4. docker_hardening: fail on :latest, missing non-root USER, or missing HEALTHCHECK; pass on pinned tag + non-root USER + HEALTHCHECK.
+- Export appendLedger, verifyLedgerChain: crypto.subtle.digest('SHA-256', ...) over prev_hash + canonical_json under deconstructed_ledger_v1 via getStore(). verifyLedgerChain returns false on mutation.
+
+5. index.html (calm Landing View + Matcha & Linen Studio + Intro Modal)
+- Inline CSS, module script, no tabs. Tokens: --bg #f5f2eb; --card rgba(252,250,246,0.92); --text #2a2f2c; --muted #6c726d; --sage #58725b; --amber #c88a36; --terracotta #b85c38. 28px card radius, 999px pills, max-width 820px centered, tabular-nums, system font stack.
+- Intro overlay on every load (no localStorage suppression): position fixed; inset 0; z-index 50; background rgba(42,47,44,0.42); backdrop-filter blur(6px). Bold wide-tracked DECONSTRUCTED heading, hairline divider, justified 2-sentence clean-room overview, justified "Creator" / "John Dominic Ragudo" row, full-width #58725b pill "Launch DeconstructED". While open: inert on #app (wrapping #landing-view and #studio-view), body scroll locked. Visibility transition: 0s linear 0s on show, 0s linear 0.28s on hide, disabled under prefers-reduced-motion: reduce. Escape, backdrop, and button dismiss; requestAnimationFrame focus on load and on "Info" pills.
+- Default #landing-view (spacious, zero studio clutter above the fold):
+  - Quiet top bar: "DeconstructED" left; "Open Studio" + "Info" pills right.
+  - Centered editorial hero (max-width 760px): eyebrow pill "100% Client-Side · Zero Uploads · Clean-Room Engineering", headline "Take any app apart. Build it back cleanly.", 1-sentence subtitle naming all 7 formats (.apk, .xapk, .ipa, .exe, .msi, .pkg, .zip), primary #58725b pill "Open X-Ray Studio" (opens #studio-view), secondary hairline pill "Try a Sample Binary" (opens #studio-view and loads fintech_wallet.apk).
+  - Minimal 3-column hairline footer strip: "01 · Local Binary X-Ray", "02 · Adaptive Mastery Labs", "03 · Clean-Room Starter Forge".
+- #studio-view (with quiet "← Home" and "Info" header pills) keeps 4 stacked cards:
+  1. X-ray dropzone: drag-drop, file input accept=".apk,.xapk,.ipa,.exe,.msi,.pkg,.zip" (pass File directly to parseBinary), specimen pills, "100% Client-Side · Offline ML" badge.
+  2. Forensic X-ray & ML intelligence: format badge, runtime/installer chips (.xapk split/ABI/OBB and .pkg TOC/signature), archetype bars, risk attributions, section entropy chart, clickable inline SVG map (UI → Core Logic → Data/Storage → OS & Security).
+  3. Adaptive skill-tree & lab: SVG prerequisite DAG (Terracotta → Amber → Sage) with live BKT P(L)%, lesson, textarea, "Run Lab Check", rule diff, verified SHA-256 ledger badge.
+  4. Clean-room production forge: "Forge Production Starter (.zip)" Blob download + manifest preview.
+
+6. tests/deconstructed.test.js (6 tests, node:test, run BEFORE server starts)
+  1. All 7 synthetic formats parse (.apk, .xapk manifest + splits, .ipa cryptid === 1, .exe .upx0 > 7.2 vs .text 0.0, .msi OLE2 + MSCF, .pkg XAR + deflate TOC + signature, .zip manifests), plus readRange works on Blob and Uint8Array.
+  2. Zip-bomb (entry > 1_048_576 with ratio > 100, or extraction > 16 MB) and "../" buffers throw SecurityError.
+  3. fintech_wallet.apk → Fintech / Payments, arcade_engine.exe → 2D/3D Game, edge_sensor_kit.zip → IoT / Hardware; risk attributions non-empty; BKT P(L) strictly rises on pass.
+  4. All 4 labs fail buggy and pass fixed snippets; verifyLedgerChain true on valid chain, false on mutated entry.
+  5. Forged zip round-trips through parseBinary and lists MOOC_SYLLABUS.md, ARCHITECTURE.md, THREAT_MODEL.md, non-root Dockerfile, render.yaml, .github/workflows/ci.yml.
+  6. index.html static check: Matcha & Linen tokens, DECONSTRUCTED and John Dominic Ragudo intro, #landing-view, #studio-view, "Open X-Ray Studio", all 7 extensions in file input accept, zero external http(s):// script or link tags.
+</architecture>
+
+<design_system>
+Quiet linen-paper feel: 1px borders, soft shadows, 24px card padding. Color pairs with text labels. Visible focus rings, 44px hit areas, aria-labels. One column working at 360px.
+</design_system>
+
+<verification_gate>
+Check before answering:
+- Exactly 7 files.
+- No eval, Worker, DOMParser on AXML, CDN, npm, or pip.
+- Guards run before inflate; readRange lazily slices Blob/File (no whole-file arrayBuffer()); ZIP uses deflate-raw, .pkg XAR uses deflate; CRC-32 uses `>>> 0`; FAT Mach-O Big-Endian, thin Little-Endian.
+- localStorage only inside getStore().
+- All 6 tests assert concrete values using src/parser.js specimen factories.
+</verification_gate>
+
+<execution_steps>
+1. Write files in task order, tests before index.html.
+2. Run `node --test` (Node 20+); expect 6 passing before starting any server.
+3. Run `python3 -m http.server 8765` and open http://localhost:8765/.
+4. Deploy as-is to GitHub Pages, Cloudflare Pages, or Render Static Site.
+</execution_steps>
+</deconstructed_prompt>
