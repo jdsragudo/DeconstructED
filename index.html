@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DeconstructED — Clean-Room Binary X-Ray &amp; Adaptive Lab</title>
+  <style>
+    :root {
+      --bg: #f5f2eb;
+      --card: rgba(252, 250, 246, 0.92);
+      --text: #2a2f2c;
+      --muted: #6c726d;
+      --sage: #58725b;
+      --amber: #c88a36;
+      --terracotta: #b85c38;
+      --border: rgba(42, 47, 44, 0.12);
+      --shadow: 0 12px 32px rgba(42, 47, 44, 0.06);
+      --radius-card: 28px;
+      --radius-pill: 999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(88, 114, 91, 0.08), transparent 42%),
+        radial-gradient(circle at 88% 22%, rgba(200, 138, 54, 0.07), transparent 46%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.55;
+      font-variant-numeric: tabular-nums;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body.scroll-locked {
+      overflow: hidden;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--sage);
+      outline-offset: 3px;
+    }
+
+    #app {
+      width: 100%;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 4px 0;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .brand-mark {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      min-width: 44px;
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+    }
+
+    .pill-btn:hover {
+      border-color: rgba(42, 47, 44, 0.28);
+      background: #ffffff;
+    }
+
+    .pill-btn:active {
+      transform: translateY(1px);
+    }
+
+    .pill-btn.primary {
+      background: var(--sage);
+      border-color: var(--sage);
+      color: #fcfaf6;
+    }
+
+    .pill-btn.primary:hover {
+      background: #4b634e;
+      border-color: #4b634e;
+    }
+
+    .pill-btn.active {
+      background: var(--text);
+      color: #fcfaf6;
+      border-color: var(--text);
+    }
+
+    /* Landing View */
+    #landing-view {
+      max-width: 820px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px 16px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 40px;
+    }
+
+    .hero {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 36px 0 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 16px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(88, 114, 91, 0.28);
+      background: rgba(88, 114, 91, 0.08);
+      color: #394d3b;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-size: clamp(2.1rem, 5vw, 3.25rem);
+      font-weight: 750;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+      color: var(--text);
+    }
+
+    .hero-subtitle {
+      margin: 0;
+      max-width: 620px;
+      font-size: 1.04rem;
+      color: var(--muted);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .hero-footer {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Studio View */
+    #studio-view {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .step-kicker {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: rgba(245, 242, 235, 0.85);
+      color: var(--text);
+    }
+
+    .badge.sage {
+      border-color: rgba(88, 114, 91, 0.35);
+      background: rgba(88, 114, 91, 0.12);
+      color: #394d3b;
+    }
+
+    .badge.amber {
+      border-color: rgba(200, 138, 54, 0.4);
+      background: rgba(200, 138, 54, 0.14);
+      color: #7d5317;
+    }
+
+    .badge.terracotta {
+      border-color: rgba(184, 92, 56, 0.4);
+      background: rgba(184, 92, 56, 0.14);
+      color: #843a1d;
+    }
+
+    .dropzone {
+      border: 1.5px dashed rgba(42, 47, 44, 0.24);
+      border-radius: 20px;
+      padding: 24px 18px;
+      text-align: center;
+      background: rgba(245, 242, 235, 0.55);
+      transition: border-color 0.18s ease, background 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dropzone.drag-over {
+      border-color: var(--sage);
+      background: rgba(88, 114, 91, 0.09);
+    }
+
+    .dropzone p {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .specimen-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .error-banner {
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(184, 92, 56, 0.45);
+      background: rgba(184, 92, 56, 0.12);
+      color: #7d3418;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .grid-two, .hero-footer {
+        grid-template-columns: 1fr;
+      }
+      .card {
+        padding: 18px;
+      }
+    }
+
+    .subpanel {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: rgba(245, 242, 235, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .subpanel-title {
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .bar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.84rem;
+      font-weight: 500;
+      gap: 8px;
+    }
+
+    .bar-track {
+      height: 8px;
+      border-radius: var(--radius-pill);
+      background: rgba(42, 47, 44, 0.08);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: var(--radius-pill);
+      background: var(--sage);
+      transition: width 0.25s ease;
+    }
+
+    .bar-fill.amber {
+      background: var(--amber);
+    }
+
+    .bar-fill.terracotta {
+      background: var(--terracotta);
+    }
+
+    .attr-list, .manifest-list, .diff-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .attr-item, .manifest-item, .diff-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+    }
+
+    .svg-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .arch-svg, .dag-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .arch-node, .dag-node {
+      cursor: pointer;
+    }
+
+    .arch-node:focus-visible, .dag-node:focus-visible {
+      outline: 2px solid var(--sage);
+      outline-offset: 2px;
+    }
+
+    .evidence-callout {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+    }
+
+    textarea.code-editor {
+      width: 100%;
+      min-height: 148px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(42, 47, 44, 0.2);
+      background: #fdfcf9;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    .lab-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    /* Intro Overlay */
+    #intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(42, 47, 44, 0.42);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.28s ease, visibility 0s linear 0s;
+    }
+
+    #intro-overlay.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.28s ease, visibility 0s linear 0.28s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #intro-overlay,
+      #intro-overlay.is-hidden,
+      .bar-fill,
+      .pill-btn {
+        transition: none !important;
+      }
+    }
+
+    .intro-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      box-shadow: 0 24px 60px rgba(42, 47, 44, 0.22);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .intro-heading {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .hairline {
+      height: 1px;
+      width: 100%;
+      background: var(--border);
+      border: 0;
+      margin: 0;
+    }
+
+    .intro-copy {
+      margin: 0;
+      font-size: 0.94rem;
+      text-align: justify;
+      color: var(--text);
+    }
+
+    .creator-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .creator-row strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body class="scroll-locked">
+  <div id="intro-overlay" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+    <div class="intro-card">
+      <h1 id="intro-title" class="intro-heading">DECONSTRUCTED</h1>
+      <hr class="hairline" />
+      <p class="intro-copy">
+        DeconstructED inspects dropped app binaries locally via lazy byte-range X-rays and pure-JS classical ML, turning structural risks into four adaptive hardening labs. Once verified against a SHA-256 mastery ledger, it forges a clean-room production starter archive without copying a single line of target code.
+      </p>
+      <hr class="hairline" />
+      <div class="creator-row">
+        <span>Creator</span>
+        <strong>John Dominic Ragudo</strong>
+      </div>
+      <button id="launch-btn" type="button" class="pill-btn primary full-width">
+        Launch DeconstructED
+      </button>
+    </div>
+  </div>
+
+  <div id="app" inert>
+    <!-- Landing View -->
+    <section id="landing-view" aria-label="DeconstructED Overview">
+      <header class="topbar">
+        <span class="brand-mark">DeconstructED</span>
+        <div class="topbar-actions">
+          <button id="landing-studio-btn" type="button" class="pill-btn">Open Studio</button>
+          <button id="landing-info-btn" type="button" class="pill-btn" aria-label="Open DeconstructED info overlay">Info</button>
+        </div>
+      </header>
+
+      <div class="hero">
+        <span class="hero-eyebrow">100% Client-Side · Zero Uploads · Clean-Room Engineering</span>
+        <h2 class="hero-title">Take any app apart. Build it back cleanly.</h2>
+        <p class="hero-subtitle">
+          Drop an .apk, .xapk, .ipa, .exe, .msi, .pkg, or .zip to X-ray its structure locally, diagnose risks with offline ML, master four hardening labs, and forge a clean-room starter.
+        </p>
+        <div class="hero-actions">
+          <button id="hero-open-studio-btn" type="button" class="pill-btn primary">Open X-Ray Studio</button>
+          <button id="hero-sample-btn" type="button" class="pill-btn">Try a Sample Binary</button>
+        </div>
+      </div>
+
+      <footer class="hero-footer" aria-label="DeconstructED capabilities">
+        <span>01 · Local Binary X-Ray</span>
+        <span>02 · Adaptive Mastery Labs</span>
+        <span>03 · Clean-Room Starter Forge</span>
+      </footer>
+    </section>
+
+    <!-- Studio View -->
+    <main id="studio-view" hidden>
+      <header class="topbar">
+        <button id="home-btn" type="button" class="pill-btn" aria-label="Return to landing view">← Home</button>
+        <span class="brand-mark">DeconstructED</span>
+        <button id="studio-info-btn" type="button" class="pill-btn" aria-label="Open DeconstructED info overlay">Info</button>
+      </header>
+
+      <!-- Card 1: X-ray Dropzone -->
+      <section class="card" aria-labelledby="card1-title">
+        <div class="card-header">
+          <div>
+            <div class="step-kicker">Step 1 · Artifact Ingestion</div>
+            <h3 id="card1-title" class="card-title">X-Ray Dropzone</h3>
+          </div>
+          <span class="badge sage">100% Client-Side · Offline ML</span>
+        </div>
+
+        <div id="dropzone" class="dropzone" tabindex="0" role="region" aria-label="Binary artifact dropzone">
+          <p>Drop an <strong>.apk</strong>, <strong>.xapk</strong>, <strong>.ipa</strong>, <strong>.exe</strong>, <strong>.msi</strong>, <strong>.pkg</strong>, or <strong>.zip</strong> (up to 512 MB lazy range scan) — or pick a specimen.</p>
+          <input id="file-input" class="sr-only" type="file" accept=".apk,.xapk,.ipa,.exe,.msi,.pkg,.zip" aria-label="Choose binary file" />
+          <button id="browse-btn" type="button" class="pill-btn">Select Binary File</button>
+        </div>
+
+        <div id="error-banner" class="error-banner" hidden role="alert"></div>
+
+        <div>
+          <div class="subpanel-title" style="margin-bottom: 8px;">Synthetic Clean-Room Specimens</div>
+          <div id="specimen-buttons" class="specimen-row"></div>
+        </div>
+      </section>
+
+      <!-- Card 2: Forensic X-ray and ML Intelligence -->
+      <section class="card" aria-labelledby="card2-title">
+        <div class="card-header">
+          <div>
+            <div class="step-kicker">Step 2 · Structural &amp; ML Telemetry</div>
+            <h3 id="card2-title" class="card-title">Forensic X-Ray &amp; ML Intelligence</h3>
+          </div>
+          <div class="chips">
+            <span id="format-badge" class="badge">FORMAT</span>
+            <span id="risk-badge" class="badge">RISK</span>
+          </div>
+        </div>
+
+        <p id="scan-summary" style="margin:0; font-size:0.92rem; color:var(--muted);"></p>
+
+        <div id="runtime-chips" class="chips" aria-label="Detected runtimes and installer chips"></div>
+
+        <div class="grid-two">
+          <div class="subpanel">
+            <h4 class="subpanel-title">Archetype Confidence (TF-IDF + NB)</h4>
+            <div id="archetype-bars"></div>
+          </div>
+          <div class="subpanel">
+            <h4 class="subpanel-title">Explainable Risk Attributions</h4>
+            <ul id="risk-attributions" class="attr-list"></ul>
+          </div>
+        </div>
+
+        <div class="subpanel">
+          <h4 class="subpanel-title">Section Entropy / Binary Telemetry</h4>
+          <div id="entropy-chart"></div>
+        </div>
+
+        <div class="subpanel">
+          <h4 class="subpanel-title">Interactive 4-Layer Architecture Map (Click a Layer)</h4>
+          <div class="svg-wrap">
+            <svg id="arch-svg" class="arch-svg" viewBox="0 0 740 96" role="img" aria-label="4-layer architecture map">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#6c726d"></path>
+                </marker>
+              </defs>
+              <line x1="168" y1="48" x2="194" y2="48" stroke="#6c726d" stroke-width="1.5" marker-end="url(#arrow)" />
+              <line x1="356" y1="48" x2="382" y2="48" stroke="#6c726d" stroke-width="1.5" marker-end="url(#arrow)" />
+              <line x1="544" y1="48" x2="570" y2="48" stroke="#6c726d" stroke-width="1.5" marker-end="url(#arrow)" />
+
+              <g class="arch-node" data-layer="ui" tabindex="0" role="button" aria-label="Inspect UI layer evidence">
+                <rect x="8" y="14" width="158" height="68" rx="16" fill="#fcfaf6" stroke="#58725b" stroke-width="2" />
+                <text x="87" y="43" text-anchor="middle" font-size="13" font-weight="700" fill="#2a2f2c">UI Layer</text>
+                <text x="87" y="61" text-anchor="middle" font-size="11" fill="#6c726d">Presentation</text>
+              </g>
+              <g class="arch-node" data-layer="core" tabindex="0" role="button" aria-label="Inspect Core Logic layer evidence">
+                <rect x="196" y="14" width="158" height="68" rx="16" fill="#fcfaf6" stroke="rgba(42,47,44,0.22)" stroke-width="1.5" />
+                <text x="275" y="43" text-anchor="middle" font-size="13" font-weight="700" fill="#2a2f2c">Core Logic</text>
+                <text x="275" y="61" text-anchor="middle" font-size="11" fill="#6c726d">Domain &amp; Code</text>
+              </g>
+              <g class="arch-node" data-layer="data" tabindex="0" role="button" aria-label="Inspect Data and Storage layer evidence">
+                <rect x="384" y="14" width="158" height="68" rx="16" fill="#fcfaf6" stroke="rgba(42,47,44,0.22)" stroke-width="1.5" />
+                <text x="463" y="43" text-anchor="middle" font-size="13" font-weight="700" fill="#2a2f2c">Data / Storage</text>
+                <text x="463" y="61" text-anchor="middle" font-size="11" fill="#6c726d">Schemas &amp; I/O</text>
+              </g>
+              <g class="arch-node" data-layer="security" tabindex="0" role="button" aria-label="Inspect OS and Security layer evidence">
+                <rect x="572" y="14" width="158" height="68" rx="16" fill="#fcfaf6" stroke="rgba(42,47,44,0.22)" stroke-width="1.5" />
+                <text x="651" y="43" text-anchor="middle" font-size="13" font-weight="700" fill="#2a2f2c">OS &amp; Security</text>
+                <text x="651" y="61" text-anchor="middle" font-size="11" fill="#6c726d">Perms &amp; Guards</text>
+              </g>
+            </svg>
+          </div>
+          <div id="arch-evidence" class="evidence-callout"></div>
+        </div>
+      </section>
+
+      <!-- Card 3: Adaptive Skill-Tree & Code-Fix Lab -->
+      <section class="card" aria-labelledby="card3-title">
+        <div class="card-header">
+          <div>
+            <div class="step-kicker">Step 3 · Bayesian Knowledge Tracing</div>
+            <h3 id="card3-title" class="card-title">Adaptive Skill-Tree &amp; Code-Fix Lab</h3>
+          </div>
+          <span id="ledger-badge" class="badge sage">SHA-256 Ledger: Verified (0 entries)</span>
+        </div>
+
+        <div class="svg-wrap">
+          <svg id="dag-svg" class="dag-svg" viewBox="0 0 740 165" role="img" aria-label="Skill tree prerequisite DAG">
+            <defs>
+              <marker id="dag-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#6c726d"></path>
+              </marker>
+            </defs>
+            <path d="M 178 82 C 215 82, 225 40, 268 40" fill="none" stroke="#6c726d" stroke-width="1.5" marker-end="url(#dag-arrow)" />
+            <path d="M 178 82 C 215 82, 225 124, 268 124" fill="none" stroke="#6c726d" stroke-width="1.5" marker-end="url(#dag-arrow)" />
+            <path d="M 458 40 C 500 40, 512 82, 554 82" fill="none" stroke="#6c726d" stroke-width="1.5" marker-end="url(#dag-arrow)" />
+            <path d="M 458 124 C 500 124, 512 82, 554 82" fill="none" stroke="#6c726d" stroke-width="1.5" marker-end="url(#dag-arrow)" />
+            <g id="dag-nodes"></g>
+          </svg>
+        </div>
+
+        <div id="lab-lesson" class="evidence-callout"></div>
+
+        <div>
+          <label for="lab-editor" class="subpanel-title" style="display:block; margin-bottom:6px;">
+            Hardening Editor (<span id="active-lab-name"></span>)
+          </label>
+          <textarea id="lab-editor" class="code-editor" spellcheck="false"></textarea>
+        </div>
+
+        <div class="lab-actions">
+          <button id="run-lab-btn" type="button" class="pill-btn primary">Run Lab Check</button>
+          <span id="lab-status" class="badge">Ready to check</span>
+        </div>
+
+        <ul id="lab-diff" class="diff-list" aria-label="Rule verification diff"></ul>
+      </section>
+
+      <!-- Card 4: Clean-Room Production Forge -->
+      <section class="card" aria-labelledby="card4-title">
+        <div class="card-header">
+          <div>
+            <div class="step-kicker">Step 4 · Hardened Clean-Room Output</div>
+            <h3 id="card4-title" class="card-title">Clean-Room Production Forge</h3>
+          </div>
+          <button id="forge-btn" type="button" class="pill-btn primary">
+            Forge Production Starter (.zip)
+          </button>
+        </div>
+        <p style="margin:0; font-size:0.9rem; color:var(--muted);">
+          Generates a fresh extractable ZIP containing a BKT-tailored syllabus, 4-layer architecture spec, threat model, clean-room code &amp; tests, pinned non-root Dockerfile, Render YAML, and GitHub Actions CI.
+        </p>
+        <ul id="manifest-preview" class="manifest-list" aria-label="Starter archive file manifest"></ul>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { parseBinary, SPECIMENS, SecurityError } from './src/parser.js';
+    import { analyzeWithML, loadMasteryMap, recordSkillAttempt } from './src/ml.js';
+    import { composeLabs, appendLedger, verifyLedgerChain, loadLedger } from './src/labs.js';
+    import { buildStarterFiles, forgeStarterZip } from './src/zipforge.js';
+
+    const state = {
+      scanResult: null,
+      mlResult: null,
+      labs: [],
+      activeLabId: 'permission_hardening',
+      activeLayer: 'ui',
+      masteryMap: loadMasteryMap(),
+      codeByLab: {},
+      view: 'landing',
+      lastInfoTrigger: null,
+    };
+
+    const app = document.getElementById('app');
+    const landingView = document.getElementById('landing-view');
+    const studioView = document.getElementById('studio-view');
+    const overlay = document.getElementById('intro-overlay');
+    const launchBtn = document.getElementById('launch-btn');
+    const landingInfoBtn = document.getElementById('landing-info-btn');
+    const studioInfoBtn = document.getElementById('studio-info-btn');
+    const landingStudioBtn = document.getElementById('landing-studio-btn');
+    const heroOpenStudioBtn = document.getElementById('hero-open-studio-btn');
+    const heroSampleBtn = document.getElementById('hero-sample-btn');
+    const homeBtn = document.getElementById('home-btn');
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const browseBtn = document.getElementById('browse-btn');
+    const errorBanner = document.getElementById('error-banner');
+    const specimenButtons = document.getElementById('specimen-buttons');
+
+    const formatBadge = document.getElementById('format-badge');
+    const riskBadge = document.getElementById('risk-badge');
+    const scanSummary = document.getElementById('scan-summary');
+    const runtimeChips = document.getElementById('runtime-chips');
+    const archetypeBars = document.getElementById('archetype-bars');
+    const riskAttributions = document.getElementById('risk-attributions');
+    const entropyChart = document.getElementById('entropy-chart');
+    const archEvidence = document.getElementById('arch-evidence');
+
+    const dagNodes = document.getElementById('dag-nodes');
+    const labLesson = document.getElementById('lab-lesson');
+    const activeLabName = document.getElementById('active-lab-name');
+    const labEditor = document.getElementById('lab-editor');
+    const runLabBtn = document.getElementById('run-lab-btn');
+    const labStatus = document.getElementById('lab-status');
+    const labDiff = document.getElementById('lab-diff');
+    const ledgerBadge = document.getElementById('ledger-badge');
+
+    const forgeBtn = document.getElementById('forge-btn');
+    const manifestPreview = document.getElementById('manifest-preview');
+
+    function setView(viewName, focusTarget = null) {
+      state.view = viewName;
+      const inStudio = viewName === 'studio';
+      landingView.hidden = inStudio;
+      studioView.hidden = !inStudio;
+      if (focusTarget) {
+        requestAnimationFrame(() => focusTarget.focus());
+      }
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    function showOverlay(triggerEl = null) {
+      state.lastInfoTrigger = triggerEl;
+      overlay.classList.remove('is-hidden');
+      app.setAttribute('inert', '');
+      document.body.classList.add('scroll-locked');
+      requestAnimationFrame(() => launchBtn.focus());
+    }
+
+    function hideOverlay() {
+      overlay.classList.add('is-hidden');
+      app.removeAttribute('inert');
+      document.body.classList.remove('scroll-locked');
+      const fallback = state.view === 'studio' ? studioInfoBtn : heroOpenStudioBtn;
+      const target = state.lastInfoTrigger || fallback;
+      requestAnimationFrame(() => target.focus());
+    }
+
+    launchBtn.addEventListener('click', hideOverlay);
+    landingInfoBtn.addEventListener('click', () => showOverlay(landingInfoBtn));
+    studioInfoBtn.addEventListener('click', () => showOverlay(studioInfoBtn));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) hideOverlay();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !overlay.classList.contains('is-hidden')) {
+        hideOverlay();
+      }
+    });
+
+    landingStudioBtn.addEventListener('click', () => setView('studio', homeBtn));
+    heroOpenStudioBtn.addEventListener('click', () => setView('studio', homeBtn));
+    homeBtn.addEventListener('click', () => setView('landing', heroOpenStudioBtn));
+    heroSampleBtn.addEventListener('click', async () => {
+      setView('studio', homeBtn);
+      const firstBtn = specimenButtons.querySelector('.pill-btn');
+      specimenButtons.querySelectorAll('.pill-btn').forEach((b) => b.classList.remove('active'));
+      if (firstBtn) firstBtn.classList.add('active');
+      await ingestSource(SPECIMENS[0].build(), SPECIMENS[0].filename);
+    });
+
+    requestAnimationFrame(() => launchBtn.focus());
+
+    function showError(msg) {
+      errorBanner.textContent = msg;
+      errorBanner.hidden = false;
+    }
+
+    function clearError() {
+      errorBanner.textContent = '';
+      errorBanner.hidden = true;
+    }
+
+    function masteryTier(p) {
+      if (p >= 0.75) return { color: '#58725b', bg: 'rgba(88,114,91,0.16)', cls: 'sage', label: 'Mastered' };
+      if (p >= 0.45) return { color: '#c88a36', bg: 'rgba(200,138,54,0.16)', cls: 'amber', label: 'In Progress' };
+      return { color: '#b85c38', bg: 'rgba(184,92,56,0.16)', cls: 'terracotta', label: 'Gap' };
+    }
+
+    function renderArchitectureMap() {
+      const nodes = document.querySelectorAll('#arch-svg .arch-node');
+      nodes.forEach((node) => {
+        const rect = node.querySelector('rect');
+        const isSelected = node.dataset.layer === state.activeLayer;
+        rect.setAttribute('stroke', isSelected ? '#58725b' : 'rgba(42,47,44,0.22)');
+        rect.setAttribute('stroke-width', isSelected ? '2.5' : '1.5');
+        rect.setAttribute('fill', isSelected ? 'rgba(88,114,91,0.09)' : '#fcfaf6');
+      });
+
+      const layerLabels = {
+        ui: 'UI Layer',
+        core: 'Core Logic Layer',
+        data: 'Data / Storage Layer',
+        security: 'OS & Security Layer',
+      };
+      const raw = state.scanResult?.architectureMap?.[state.activeLayer] || 'No evidence inspected yet.';
+      archEvidence.innerHTML = '';
+      const strong = document.createElement('strong');
+      strong.textContent = `${layerLabels[state.activeLayer]}: `;
+      const span = document.createElement('span');
+      span.textContent = raw;
+      archEvidence.append(strong, span);
+    }
+
+    document.querySelectorAll('#arch-svg .arch-node').forEach((node) => {
+      const select = () => {
+        state.activeLayer = node.dataset.layer;
+        renderArchitectureMap();
+      };
+      node.addEventListener('click', select);
+      node.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          select();
+        }
+      });
+    });
+
+    function addChip(text, cls = 'badge') {
+      const chip = document.createElement('span');
+      chip.className = cls;
+      chip.textContent = text;
+      runtimeChips.appendChild(chip);
+    }
+
+    function renderScanAndML() {
+      const scan = state.scanResult;
+      const ml = state.mlResult;
+      if (!scan || !ml) return;
+
+      const sizeLabel = scan.byteLength >= 1024 * 1024
+        ? `${(scan.byteLength / (1024 * 1024)).toFixed(2)} MB`
+        : `${(scan.byteLength / 1024).toFixed(1)} KB`;
+      formatBadge.textContent = `${scan.format.toUpperCase()} · ${sizeLabel}`;
+      formatBadge.className = 'badge sage';
+
+      const riskCls = ml.risk.level === 'HIGH' ? 'terracotta' : ml.risk.level === 'MEDIUM' ? 'amber' : 'sage';
+      riskBadge.textContent = `RISK ${ml.risk.score}/100 · ${ml.risk.level}`;
+      riskBadge.className = `badge ${riskCls}`;
+
+      scanSummary.textContent = `${scan.filename} — ${scan.summary} · Archetype: ${ml.topArchetype}`;
+
+      runtimeChips.innerHTML = '';
+      for (const rt of scan.runtimes) addChip(rt);
+      if (scan.xapk) {
+        if (scan.xapk.abis.length) addChip(`ABIs: ${scan.xapk.abis.join(', ')}`, 'badge amber');
+        if (scan.xapk.obbPacks.length) addChip(`OBB: ${scan.xapk.obbPacks.length} pack(s)`, 'badge amber');
+      }
+      if (scan.pkg) {
+        addChip(`TOC: ${scan.pkg.files.join(', ') || 'empty'}`, 'badge');
+        addChip(scan.pkg.signed ? `Signature: ${scan.pkg.signatureStyle}` : 'Unsigned PKG', scan.pkg.signed ? 'badge sage' : 'badge terracotta');
+      }
+
+      archetypeBars.innerHTML = '';
+      const sortedArch = Object.entries(ml.probabilities).sort((a, b) => b[1] - a[1]);
+      for (const [arch, prob] of sortedArch) {
+        const pct = (prob * 100).toFixed(1);
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = arch;
+        const valSpan = document.createElement('span');
+        valSpan.textContent = `${pct}%`;
+        label.append(nameSpan, valSpan);
+
+        const track = document.createElement('div');
+        track.className = 'bar-track';
+        const fill = document.createElement('div');
+        fill.className = `bar-fill ${arch === ml.topArchetype ? '' : 'amber'}`;
+        fill.style.width = `${Math.max(2, Number(pct))}%`;
+        track.appendChild(fill);
+        row.append(label, track);
+        archetypeBars.appendChild(row);
+      }
+
+      riskAttributions.innerHTML = '';
+      for (const attr of ml.risk.attributions) {
+        const li = document.createElement('li');
+        li.className = 'attr-item';
+        const left = document.createElement('span');
+        left.className = 'mono';
+        left.textContent = `${attr.feature} = ${attr.value}`;
+        const right = document.createElement('span');
+        right.className = `badge ${attr.delta > 8 ? 'terracotta' : attr.delta > 0 ? 'amber' : 'sage'}`;
+        right.textContent = `${attr.delta >= 0 ? '+' : ''}${attr.delta} pts`;
+        li.append(left, right);
+        riskAttributions.appendChild(li);
+      }
+
+      entropyChart.innerHTML = '';
+      if (scan.sections && scan.sections.length > 0) {
+        for (const sec of scan.sections) {
+          const row = document.createElement('div');
+          row.className = 'bar-row';
+          const label = document.createElement('div');
+          label.className = 'bar-label';
+          const left = document.createElement('span');
+          left.className = 'mono';
+          left.textContent = `${sec.name} (${sec.size} B${sec.executable ? ', exec' : ''})`;
+          const right = document.createElement('span');
+          right.textContent = `${sec.entropy.toFixed(2)} / 8.00${sec.packed ? ' · PACKED' : ''}`;
+          label.append(left, right);
+
+          const track = document.createElement('div');
+          track.className = 'bar-track';
+          const fill = document.createElement('div');
+          fill.className = `bar-fill ${sec.packed ? 'terracotta' : sec.entropy > 6 ? 'amber' : ''}`;
+          fill.style.width = `${Math.max(2, (sec.entropy / 8) * 100)}%`;
+          track.appendChild(fill);
+          row.append(label, track);
+          entropyChart.appendChild(row);
+        }
+      } else {
+        const info = document.createElement('div');
+        info.className = 'bar-row';
+        const est = scan.features?.maxCodeEntropy ?? 0;
+        info.innerHTML = `
+          <div class="bar-label">
+            <span>Estimated Payload Entropy</span>
+            <span>${est.toFixed(2)} / 8.00 bits/byte</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill ${est > 7.2 ? 'terracotta' : ''}" style="width: ${(est / 8) * 100}%"></div>
+          </div>
+        `;
+        entropyChart.appendChild(info);
+      }
+
+      renderArchitectureMap();
+    }
+
+    function renderDagAndLab() {
+      const coords = {
+        permission_hardening: { x: 16, y: 48 },
+        sqlite_safety: { x: 270, y: 6 },
+        api_bounds: { x: 270, y: 90 },
+        docker_hardening: { x: 556, y: 48 },
+      };
+
+      dagNodes.innerHTML = '';
+      for (const lab of state.labs) {
+        const pos = coords[lab.id];
+        const mastery = state.masteryMap[lab.id] ?? 0.25;
+        const tier = masteryTier(mastery);
+        const pct = Math.round(mastery * 100);
+        const isActive = lab.id === state.activeLabId;
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'dag-node');
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', `${lab.title}: ${tier.label} ${pct}%`);
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', pos.x);
+        rect.setAttribute('y', pos.y);
+        rect.setAttribute('width', '166');
+        rect.setAttribute('height', '68');
+        rect.setAttribute('rx', '16');
+        rect.setAttribute('fill', tier.bg);
+        rect.setAttribute('stroke', tier.color);
+        rect.setAttribute('stroke-width', isActive ? '3' : '1.5');
+
+        const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        titleText.setAttribute('x', pos.x + 83);
+        titleText.setAttribute('y', pos.y + 29);
+        titleText.setAttribute('text-anchor', 'middle');
+        titleText.setAttribute('font-size', '12.5');
+        titleText.setAttribute('font-weight', '700');
+        titleText.setAttribute('fill', '#2a2f2c');
+        titleText.textContent = lab.shortLabel;
+
+        const subText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        subText.setAttribute('x', pos.x + 83);
+        subText.setAttribute('y', pos.y + 49);
+        subText.setAttribute('text-anchor', 'middle');
+        subText.setAttribute('font-size', '11');
+        subText.setAttribute('font-weight', '600');
+        subText.setAttribute('fill', tier.color);
+        subText.textContent = `${tier.label} · P(L) ${pct}%`;
+
+        g.append(rect, titleText, subText);
+
+        const selectLab = () => {
+          state.activeLabId = lab.id;
+          renderDagAndLab();
+        };
+        g.addEventListener('click', selectLab);
+        g.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectLab();
+          }
+        });
+
+        dagNodes.appendChild(g);
+      }
+
+      const active = state.labs.find((l) => l.id === state.activeLabId) || state.labs[0];
+      if (!active) return;
+
+      activeLabName.textContent = active.title;
+      labLesson.innerHTML = '';
+      const evStrong = document.createElement('strong');
+      evStrong.textContent = 'Evidence Anchor: ';
+      const evText = document.createElement('span');
+      evText.textContent = `${active.evidenceNote} `;
+      const taskText = document.createElement('div');
+      taskText.style.marginTop = '6px';
+      taskText.textContent = active.prompt;
+      labLesson.append(evStrong, evText, taskText);
+
+      if (!(active.id in state.codeByLab)) {
+        state.codeByLab[active.id] = active.starterCode;
+      }
+      labEditor.value = state.codeByLab[active.id];
+    }
+
+    async function refreshLedgerBadge() {
+      const chain = loadLedger();
+      const valid = await verifyLedgerChain(chain);
+      const tail = chain.length ? ` · ${chain[chain.length - 1].hash.slice(0, 10)}…` : '';
+      const countLabel = chain.length === 1 ? '1 entry' : `${chain.length} entries`;
+      ledgerBadge.textContent = `SHA-256 Ledger: ${valid ? 'Verified' : 'TAMPERED'} (${countLabel}${tail})`;
+      ledgerBadge.className = `badge ${valid ? 'sage' : 'terracotta'}`;
+    }
+
+    function renderManifestPreview() {
+      const files = buildStarterFiles(state.scanResult || {}, state.mlResult || {}, state.masteryMap);
+      manifestPreview.innerHTML = '';
+      for (const f of files) {
+        const li = document.createElement('li');
+        li.className = 'manifest-item';
+        const left = document.createElement('span');
+        left.className = 'mono';
+        left.textContent = f.name;
+        const right = document.createElement('span');
+        right.style.color = 'var(--muted)';
+        right.textContent = f.summary;
+        li.append(left, right);
+        manifestPreview.appendChild(li);
+      }
+    }
+
+    async function ingestSource(source, filename) {
+      clearError();
+      try {
+        const scan = await parseBinary(source, filename);
+        const ml = analyzeWithML(scan);
+        state.scanResult = scan;
+        state.mlResult = ml;
+        state.labs = composeLabs(scan, ml);
+        state.codeByLab = {};
+        for (const lab of state.labs) {
+          state.codeByLab[lab.id] = lab.starterCode;
+        }
+        renderScanAndML();
+        renderDagAndLab();
+        renderManifestPreview();
+      } catch (err) {
+        if (err instanceof SecurityError) {
+          showError(`Security Guard Blocked "${filename}": ${err.message} (pre-decompression check)`);
+        } else {
+          showError(`Failed to inspect "${filename}": ${err.message}`);
+        }
+      }
+    }
+
+    labEditor.addEventListener('input', () => {
+      state.codeByLab[state.activeLabId] = labEditor.value;
+    });
+
+    runLabBtn.addEventListener('click', async () => {
+      const active = state.labs.find((l) => l.id === state.activeLabId);
+      if (!active) return;
+
+      const code = labEditor.value;
+      state.codeByLab[active.id] = code;
+      const res = active.verify(code);
+      const { prior, next, masteryMap } = recordSkillAttempt(active.id, res.passed);
+      state.masteryMap = masteryMap;
+
+      await appendLedger({
+        labId: active.id,
+        passed: res.passed,
+        masteryBefore: prior,
+        masteryAfter: next,
+        specimen: state.scanResult?.filename || '',
+      });
+
+      labStatus.textContent = res.passed
+        ? `PASS · P(L) ${Math.round(prior * 100)}% → ${Math.round(next * 100)}%`
+        : `FAIL · P(L) ${Math.round(prior * 100)}% → ${Math.round(next * 100)}%`;
+      labStatus.className = `badge ${res.passed ? 'sage' : 'terracotta'}`;
+
+      labDiff.innerHTML = '';
+      for (const item of res.ruleDiff) {
+        const li = document.createElement('li');
+        li.className = 'diff-item';
+        const left = document.createElement('span');
+        left.textContent = `${item.rule} — ${item.detail}`;
+        const right = document.createElement('span');
+        right.className = `badge ${item.status === 'pass' ? 'sage' : 'terracotta'}`;
+        right.textContent = item.status.toUpperCase();
+        li.append(left, right);
+        labDiff.appendChild(li);
+      }
+
+      renderDagAndLab();
+      renderManifestPreview();
+      await refreshLedgerBadge();
+    });
+
+    forgeBtn.addEventListener('click', () => {
+      const zipBytes = forgeStarterZip(state.scanResult || {}, state.mlResult || {}, state.masteryMap);
+      const blob = new Blob([zipBytes], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'deconstructed-starter.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+
+    SPECIMENS.forEach((spec, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `pill-btn${idx === 0 ? ' active' : ''}`;
+      btn.textContent = `${spec.label} (${spec.formatBadge})`;
+      btn.addEventListener('click', async () => {
+        specimenButtons.querySelectorAll('.pill-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        await ingestSource(spec.build(), spec.filename);
+      });
+      specimenButtons.appendChild(btn);
+    });
+
+    browseBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      specimenButtons.querySelectorAll('.pill-btn').forEach((b) => b.classList.remove('active'));
+      await ingestSource(file, file.name);
+      fileInput.value = '';
+    });
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('drag-over');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('drag-over');
+    });
+    dropzone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag-over');
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+      specimenButtons.querySelectorAll('.pill-btn').forEach((b) => b.classList.remove('active'));
+      await ingestSource(file, file.name);
+    });
+
+    await refreshLedgerBadge();
+    await ingestSource(SPECIMENS[0].build(), SPECIMENS[0].filename);
+  </script>
+</body>
+</html>
