@@ -4,7 +4,6 @@
 
 `v1.0.0` · `ES Modules ("type": "module")` · `Zero Dependencies` · `100% Browser-Based` · `Node.js 20+ Test Suite`
 
-Drop any real app file—.apk, .xapk, .ipa, .exe, .msi, .pkg, or .zip up to 512 MB—and DeconstructED dissects its real architecture locally in milliseconds without uploading a single byte. Built with pure vanilla JavaScript, explainable classical ML, and zero external dependencies or runtime LLMs, it turns the exact evidence inside any app into an interactive mastery roadmap, hands-on code-fix labs, and a downloadable, production-ready starter repository.
 ---
 
 ## 1. Overview & Clean-Room Philosophy
