@@ -5,6 +5,7 @@
 `v1.0.0` · `ES Modules ("type": "module")` · `Zero Dependencies` · `100% Browser-Based` · `Node.js 20+ Test Suite`
 
 ---
+Live App: https://deconstructed.onrender.com/
 
 ## 1. Overview & Clean-Room Philosophy
 
